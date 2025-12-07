@@ -2,6 +2,7 @@ import React from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ModalProvider } from "./context/ModalContext";
 import { Toaster } from "./components/ui/toaster";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -35,94 +36,96 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/work-orders"
-            element={
-              <ProtectedRoute>
-                <WorkOrders />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/equipment"
-            element={
-              <ProtectedRoute>
-                <Equipment />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/preventive-maintenance"
-            element={
-              <ProtectedRoute>
-                <PreventiveMaintenance />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/inventory"
-            element={
-              <ProtectedRoute>
-                <Inventory />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/vendors"
-            element={
-              <ProtectedRoute>
-                <Vendors />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/purchase-orders"
-            element={
-              <ProtectedRoute>
-                <PurchaseOrders />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <Reports />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-      <Toaster />
-    </AuthProvider>
+    <ModalProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/work-orders"
+              element={
+                <ProtectedRoute>
+                  <WorkOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/equipment"
+              element={
+                <ProtectedRoute>
+                  <Equipment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/preventive-maintenance"
+              element={
+                <ProtectedRoute>
+                  <PreventiveMaintenance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute>
+                  <Inventory />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/vendors"
+              element={
+                <ProtectedRoute>
+                  <Vendors />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders"
+              element={
+                <ProtectedRoute>
+                  <PurchaseOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+        <Toaster />
+      </AuthProvider>
+    </ModalProvider>
   );
 }
 
