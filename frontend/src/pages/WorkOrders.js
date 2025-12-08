@@ -1,339 +1,436 @@
 import React, { useState } from 'react';
-import { workOrders as initialWorkOrders } from '../mockData';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../components/ui/dialog';
-import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Search, Filter, Eye } from 'lucide-react';
-import { toast } from '../hooks/use-toast';
+  Search,
+  ChevronDown,
+  Wrench,
+  Plus,
+  Printer,
+  FileSpreadsheet,
+  Calendar,
+  Settings,
+  HelpCircle,
+} from 'lucide-react';
+import { Button } from '../components/ui/button';
+import WorkOrderDetails from '../components/WorkOrderDetails';
+import NewWorkOrderModal from '../components/NewWorkOrderModal';
+import MaintenanceCalendar from '../components/MaintenanceCalendar';
+import CustomizeFieldsModal from '../components/CustomizeFieldsModal';
+import { useModal } from '../context/ModalContext';
 
 const WorkOrders = () => {
-  const [workOrders, setWorkOrders] = useState(initialWorkOrders);
+  const { isNewWorkOrderModalOpen, openNewWorkOrderModal, closeNewWorkOrderModal } = useModal();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [selectedWO, setSelectedWO] = useState(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [locationFilter, setLocationFilter] = useState('All Locations');
+  const [filterNone, setFilterNone] = useState('Filter: None');
+  const [menuDropdownOpen, setMenuDropdownOpen] = useState(false);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
 
-  const [newWO, setNewWO] = useState({
-    title: '',
-    equipment: '',
-    priority: 'medium',
-    description: '',
-    assignedTo: '',
-    dueDate: '',
-  });
+  // Work orders data
+  const workOrdersData = [
+    {
+      number: 1004,
+      equipmentId: 'PD-000-01',
+      equipmentName: 'Police Cruiser',
+      equipmentModel: 'Ford Explorer',
+      image: '/equipment-police.jpg',
+      assignees: [],
+      scheduled: null,
+      status: 'Open',
+      tasks: 1,
+      progress: 30,
+    },
+    {
+      number: 1003,
+      equipmentId: 'T-350-4',
+      equipmentName: 'Pickup',
+      equipmentModel: 'Ford F350',
+      image: '/equipment-truck.jpg',
+      assignees: [],
+      scheduled: null,
+      status: 'Closed',
+      tasks: 1,
+      progress: 100,
+    },
+    {
+      number: 1002,
+      equipmentId: 'T-350-4',
+      equipmentName: 'Pickup',
+      equipmentModel: 'Ford F350',
+      image: '/equipment-truck.jpg',
+      assignees: [],
+      scheduled: null,
+      status: 'Open',
+      tasks: 1,
+      progress: 30,
+    },
+    {
+      number: 1001,
+      equipmentId: 'R-531-001',
+      equipmentName: '50 Ton Air Ride Paver Chassis',
+      equipmentModel: 'Kaufman Lowboy',
+      image: '/equipment-paver.jpg',
+      assignees: [],
+      scheduled: null,
+      status: 'Closed',
+      tasks: 1,
+      progress: 100,
+    },
+    {
+      number: 1000,
+      equipmentId: 'T-350-4',
+      equipmentName: 'Pickup',
+      equipmentModel: 'Ford F350',
+      image: '/equipment-truck.jpg',
+      assignees: [],
+      scheduled: null,
+      status: 'Closed',
+      tasks: 2,
+      progress: 100,
+    },
+  ];
 
-  const filteredWorkOrders = workOrders.filter((wo) => {
+  const filteredWorkOrders = workOrdersData.filter(wo => {
     const matchesSearch =
-      wo.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      wo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      wo.equipment.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || wo.status === filterStatus;
-    return matchesSearch && matchesFilter;
+      wo.number.toString().includes(searchTerm.toLowerCase()) ||
+      wo.equipmentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      wo.equipmentName.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
-  const handleCreateWO = () => {
-    const newWorkOrder = {
-      id: `WO-${1000 + workOrders.length + 1}`,
-      ...newWO,
-      equipmentId: 'EQ-001',
-      status: 'open',
-      createdDate: new Date().toISOString().split('T')[0],
-      type: 'corrective',
-      estimatedHours: 0,
-      actualHours: 0,
-    };
-    setWorkOrders([newWorkOrder, ...workOrders]);
-    setIsCreateDialogOpen(false);
-    setNewWO({
-      title: '',
-      equipment: '',
-      priority: 'medium',
-      description: '',
-      assignedTo: '',
-      dueDate: '',
-    });
-    toast({
-      title: 'Work Order Created',
-      description: `Work order ${newWorkOrder.id} has been created successfully.`,
-    });
+  const getStatusBadge = (status) => {
+    if (status === 'Open') {
+      return (
+        <span className="px-3 py-1 text-xs font-medium bg-blue-500 text-white rounded-full">
+          Open
+        </span>
+      );
+    }
+    return (
+      <span className="px-3 py-1 text-xs font-medium bg-green-500 text-white rounded-full">
+        Closed
+      </span>
+    );
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      open: 'bg-blue-500',
-      'in-progress': 'bg-yellow-500',
-      completed: 'bg-green-500',
-      scheduled: 'bg-purple-500',
-    };
-    return colors[status] || 'bg-gray-500';
+  const getProgressBar = (progress, tasks) => {
+    const isComplete = progress === 100;
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-sm text-gray-600">{tasks} task{tasks > 1 ? 's' : ''}</span>
+        <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full ${isComplete ? 'bg-green-500' : 'bg-yellow-400'}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+    );
   };
 
-  const getPriorityColor = (priority) => {
-    const colors = {
-      critical: 'bg-red-500',
-      high: 'bg-orange-500',
-      medium: 'bg-yellow-500',
-      low: 'bg-blue-500',
-    };
-    return colors[priority] || 'bg-gray-500';
+  // Handle print for work orders
+  const handlePrint = () => {
+    const today = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const printHTML = `
+      <div class="print-header">
+        <h1>Work Orders</h1>
+        <p>Generated on ${today}</p>
+      </div>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>Number</th>
+            <th>Equipment</th>
+            <th>Status</th>
+            <th>Tasks</th>
+            <th>Progress</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredWorkOrders.map(wo => `
+            <tr>
+              <td>${wo.number}</td>
+              <td>${wo.equipmentId} ${wo.equipmentName}</td>
+              <td>${wo.status}</td>
+              <td>${wo.tasks} task${wo.tasks > 1 ? 's' : ''}</td>
+              <td>${wo.progress}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="print-footer">
+        <p>Total: ${filteredWorkOrders.length} work orders</p>
+      </div>
+    `;
+
+    const printContainer = document.createElement('div');
+    printContainer.id = 'print-container';
+    printContainer.className = 'print-area';
+    printContainer.innerHTML = printHTML;
+
+    document.body.appendChild(printContainer);
+    window.print();
+    document.body.removeChild(printContainer);
+    setMenuDropdownOpen(false);
   };
+
+  // Show work order details if a work order is selected
+  if (selectedWorkOrder) {
+    return (
+      <WorkOrderDetails
+        workOrder={selectedWorkOrder}
+        onBack={() => setSelectedWorkOrder(null)}
+      />
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Work Orders</h2>
-          <p className="text-gray-600 mt-1">Manage and track maintenance work orders</p>
-        </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-500 hover:bg-blue-600">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Work Order
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Work Order</DialogTitle>
-              <DialogDescription>Fill in the details to create a new work order</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    value={newWO.title}
-                    onChange={(e) => setNewWO({ ...newWO, title: e.target.value })}
-                    placeholder="Enter work order title"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="equipment">Equipment *</Label>
-                  <Input
-                    id="equipment"
-                    value={newWO.equipment}
-                    onChange={(e) => setNewWO({ ...newWO, equipment: e.target.value })}
-                    placeholder="Select equipment"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select value={newWO.priority} onValueChange={(value) => setNewWO({ ...newWO, priority: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="critical">Critical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={newWO.dueDate}
-                    onChange={(e) => setNewWO({ ...newWO, dueDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assignedTo">Assign To</Label>
-                <Input
-                  id="assignedTo"
-                  value={newWO.assignedTo}
-                  onChange={(e) => setNewWO({ ...newWO, assignedTo: e.target.value })}
-                  placeholder="Enter technician name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newWO.description}
-                  onChange={(e) => setNewWO({ ...newWO, description: e.target.value })}
-                  placeholder="Enter work order description"
-                  rows={4}
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateWO} className="bg-blue-500 hover:bg-blue-600">
-                  Create Work Order
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-800">
+          Work Orders <span className="text-gray-400 font-normal">{filteredWorkOrders.length}</span>
+        </h1>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search by ID, title, or equipment..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Filter Bar */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          {/* All Dropdown */}
+          <button className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50">
+            {statusFilter}
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          </button>
+
+          {/* All Locations Dropdown */}
+          <button className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50">
+            {locationFilter}
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          </button>
+
+          {/* Filter: None Dropdown */}
+          <button className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50">
+            {filterNone}
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-48 h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          {/* New Button */}
+          <Button
+            onClick={openNewWorkOrderModal}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 h-9"
+          >
+            New
+          </Button>
+
+          {/* Menu Icon */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuDropdownOpen(!menuDropdownOpen)}
+              className="p-2 text-gray-500 hover:bg-gray-100 rounded"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {menuDropdownOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setMenuDropdownOpen(false)}
+                />
+
+                {/* Menu */}
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                  <button
+                    onClick={handlePrint}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Printer className="w-4 h-4 text-gray-400" />
+                    Print
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('Export to CSV clicked');
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-gray-400" />
+                    Export to CSV
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCalendarOpen(true);
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    View Calendar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCustomizeOpen(true);
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    Customize
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('Help clicked');
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <HelpCircle className="w-4 h-4 text-gray-400" />
+                    Help
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Work Orders Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Work Orders ({filteredWorkOrders.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">ID</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Title</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Equipment</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Priority</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Assigned To</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Due Date</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredWorkOrders.map((wo) => (
-                  <tr key={wo.id} className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 font-medium text-gray-900">{wo.id}</td>
-                    <td className="py-3 px-4 text-gray-700">{wo.title}</td>
-                    <td className="py-3 px-4 text-gray-700">{wo.equipment}</td>
-                    <td className="py-3 px-4">
-                      <Badge className={`${getPriorityColor(wo.priority)} text-white capitalize`}>
-                        {wo.priority}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge className={`${getStatusColor(wo.status)} text-white capitalize`}>
-                        {wo.status}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-gray-700">{wo.assignedTo}</td>
-                    <td className="py-3 px-4 text-gray-700">{wo.dueDate}</td>
-                    <td className="py-3 px-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedWO(wo);
-                          setIsViewDialogOpen(true);
-                        }}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {/* Table Header */}
+        <div className="grid grid-cols-[40px_80px_1fr_120px_120px_100px_150px] items-center px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500">
+          <div className="flex items-center justify-center">
+            <input type="checkbox" className="w-4 h-4 rounded border-gray-300" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-1">
+            Number
+            <ChevronDown className="w-3 h-3" />
+          </div>
+          <div>Equipment</div>
+          <div>Assignees</div>
+          <div>Scheduled</div>
+          <div>Status</div>
+          <div>Progress</div>
+        </div>
 
-      {/* View Work Order Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          {selectedWO && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{selectedWO.id} - {selectedWO.title}</DialogTitle>
-                <DialogDescription>Work order details and information</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-600">Equipment</Label>
-                    <p className="font-medium">{selectedWO.equipment}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Type</Label>
-                    <p className="font-medium capitalize">{selectedWO.type}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Priority</Label>
-                    <Badge className={`${getPriorityColor(selectedWO.priority)} text-white capitalize`}>
-                      {selectedWO.priority}
-                    </Badge>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Status</Label>
-                    <Badge className={`${getStatusColor(selectedWO.status)} text-white capitalize`}>
-                      {selectedWO.status}
-                    </Badge>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Created Date</Label>
-                    <p className="font-medium">{selectedWO.createdDate}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Due Date</Label>
-                    <p className="font-medium">{selectedWO.dueDate}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Assigned To</Label>
-                    <p className="font-medium">{selectedWO.assignedTo}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Estimated Hours</Label>
-                    <p className="font-medium">{selectedWO.estimatedHours}h</p>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-gray-600">Description</Label>
-                  <p className="mt-1">{selectedWO.description}</p>
-                </div>
+        {/* Table Rows */}
+        {filteredWorkOrders.map((wo) => (
+          <div
+            key={wo.number}
+            className="grid grid-cols-[40px_80px_1fr_120px_120px_100px_150px] items-center px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+            onClick={() => setSelectedWorkOrder(wo)}
+          >
+            {/* Checkbox */}
+            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+              <input type="checkbox" className="w-4 h-4 rounded border-gray-300" />
+            </div>
+
+            {/* Number */}
+            <div className="text-sm text-gray-700">
+              {wo.number}
+            </div>
+
+            {/* Equipment Info */}
+            <div className="flex items-center gap-3">
+              {/* Image */}
+              <div className="w-14 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                <Wrench className="w-full h-full p-2 text-gray-400" />
               </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+              {/* Name and Model */}
+              <div>
+                <p className="text-sm font-medium text-blue-600">{wo.equipmentId} {wo.equipmentName}</p>
+                <p className="text-xs text-gray-500">{wo.equipmentModel}</p>
+              </div>
+            </div>
+
+            {/* Assignees */}
+            <div className="text-sm text-gray-500">
+              {wo.assignees.length > 0 ? wo.assignees.join(', ') : '-'}
+            </div>
+
+            {/* Scheduled */}
+            <div className="text-sm text-gray-500">
+              {wo.scheduled || '-'}
+            </div>
+
+            {/* Status */}
+            <div>
+              {getStatusBadge(wo.status)}
+            </div>
+
+            {/* Progress */}
+            <div>
+              {getProgressBar(wo.progress, wo.tasks)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between text-sm text-gray-500">
+        <div>
+          <span className="text-blue-500">Showing 1 to {filteredWorkOrders.length} of {filteredWorkOrders.length} entries</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="px-3 py-1 text-gray-400 hover:text-gray-600 disabled:opacity-50" disabled>
+            Previous
+          </button>
+          <span className="text-gray-300">|</span>
+          <button className="px-3 py-1 text-gray-400 hover:text-gray-600 disabled:opacity-50" disabled>
+            Next
+          </button>
+        </div>
+      </div>
+
+      {/* New Work Order Modal */}
+      <NewWorkOrderModal
+        isOpen={isNewWorkOrderModalOpen}
+        onClose={closeNewWorkOrderModal}
+        onSave={(data) => {
+          console.log('New work order data:', data);
+          // Add work order logic would go here
+        }}
+      />
+
+      {/* Maintenance Calendar Sidebar */}
+      <MaintenanceCalendar
+        isOpen={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        equipmentData={filteredWorkOrders}
+      />
+
+      {/* Customize Fields Modal */}
+      <CustomizeFieldsModal
+        isOpen={customizeOpen}
+        onClose={() => setCustomizeOpen(false)}
+        onSave={(settings) => {
+          console.log('Saved customization settings:', settings);
+        }}
+      />
     </div>
   );
 };

@@ -8,10 +8,16 @@ import {
   Wrench,
   Filter,
   Plus,
+  Printer,
+  FileSpreadsheet,
+  Calendar,
+  HelpCircle,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import EquipmentDetails from '../components/EquipmentDetails';
 import NewEquipmentModal from '../components/NewEquipmentModal';
+import MaintenanceCalendar from '../components/MaintenanceCalendar';
+import CustomizeFieldsModal from '../components/CustomizeFieldsModal';
 import { useModal } from '../context/ModalContext';
 
 const Equipment = () => {
@@ -249,6 +255,9 @@ const Equipment = () => {
   ];
 
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [menuDropdownOpen, setMenuDropdownOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
 
   const filteredEquipment = equipmentData.filter(eq => {
     const matchesSearch =
@@ -257,6 +266,78 @@ const Equipment = () => {
       eq.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  // Handle Print function - uses current page with CSS print styles
+  const handlePrint = () => {
+    const today = new Date().toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric'
+    });
+
+    // Create print content HTML
+    const printHTML = `
+      <div class="print-header">
+        <h1>Active Equipments</h1>
+      </div>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>Equipment</th>
+            <th>Keywords</th>
+            <th>Meters</th>
+            <th>Tasks</th>
+            <th>Inspections</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredEquipment.map(eq => {
+      const taskText = eq.tasks
+        ? (eq.tasks.overdue
+          ? `<span class="task-due">${eq.tasks.overdue} due</span>`
+          : eq.tasks.soon
+            ? `<span class="task-due-soon">${eq.tasks.soon} due soon</span>`
+            : '')
+        : '';
+      const inspectionText = eq.inspections
+        ? `<span class="inspection-ok">OK ${eq.inspections.date}</span>`
+        : '';
+      return `
+              <tr>
+                <td>
+                  <span class="equipment-id">${eq.id} ${eq.name}</span><br/>
+                  <span class="equipment-model">${eq.yearMakeModel}</span>
+                </td>
+                <td>${eq.keywords.join(', ')}</td>
+                <td>${eq.meters.value}${eq.meters.secondary ? '<br/>' + eq.meters.secondary : ''}</td>
+                <td>${taskText}</td>
+                <td>${inspectionText}</td>
+              </tr>
+            `;
+    }).join('')}
+        </tbody>
+      </table>
+      <div class="print-footer">
+        <span>${today} | cttechengineering.com | Powered by www.mtcproweb.com</span>
+        <span>page 1 of 1</span>
+      </div>
+    `;
+
+    // Create print container element
+    const printContainer = document.createElement('div');
+    printContainer.id = 'print-container';
+    printContainer.className = 'print-area';
+    printContainer.innerHTML = printHTML;
+
+    // Add to body
+    document.body.appendChild(printContainer);
+
+    // Print
+    window.print();
+
+    // Remove print container after printing
+    document.body.removeChild(printContainer);
+  };
 
   // Show equipment details if an equipment is selected
   if (selectedEquipment) {
@@ -353,12 +434,84 @@ const Equipment = () => {
             New
           </Button>
 
-          {/* Menu Icon */}
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          {/* Menu Icon with Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuDropdownOpen(!menuDropdownOpen)}
+              className="p-2 text-gray-500 hover:bg-gray-100 rounded"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {menuDropdownOpen && (
+              <>
+                {/* Backdrop to close menu when clicking outside */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMenuDropdownOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50 py-2">
+                  <button
+                    onClick={() => {
+                      handlePrint();
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Printer className="w-4 h-4 text-gray-400" />
+                    Print
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Export to CSV logic
+                      console.log('Export to CSV clicked');
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-gray-400" />
+                    Export to CSV
+                  </button>
+                  <button
+                    onClick={() => {
+                      // View Calendar logic
+                      setCalendarOpen(true);
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    View Calendar
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Customize logic
+                      setCustomizeOpen(true);
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    Customize
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Help logic
+                      console.log('Help clicked');
+                      setMenuDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <HelpCircle className="w-4 h-4 text-gray-400" />
+                    Help
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -504,6 +657,23 @@ const Equipment = () => {
         onSave={(data) => {
           console.log('New equipment data:', data);
           // Firebase submission logic would go here
+        }}
+      />
+
+      {/* Maintenance Calendar Sidebar */}
+      <MaintenanceCalendar
+        isOpen={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        equipmentData={filteredEquipment}
+      />
+
+      {/* Customize Fields Modal */}
+      <CustomizeFieldsModal
+        isOpen={customizeOpen}
+        onClose={() => setCustomizeOpen(false)}
+        onSave={(settings) => {
+          console.log('Saved customization settings:', settings);
+          // Apply settings logic would go here
         }}
       />
     </div>

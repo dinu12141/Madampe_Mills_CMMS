@@ -34,7 +34,7 @@ import { Button } from './ui/button';
 
 const Layout = ({ children }) => {
   const { currentUser, logout } = useAuth();
-  const { openNewEquipmentModal } = useModal();
+  const { openNewEquipmentModal, openNewWorkOrderModal, openNewInspectionModal, openNewPartModal, openNewPurchaseOrderModal } = useModal();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -152,6 +152,14 @@ const Layout = ({ children }) => {
                       // For Equipment, use the modal context
                       if (item.path === '/equipment') {
                         openNewEquipmentModal();
+                      } else if (item.path === '/work-orders') {
+                        openNewWorkOrderModal();
+                      } else if (item.path === '/inspections') {
+                        openNewInspectionModal();
+                      } else if (item.path === '/inventory') {
+                        openNewPartModal();
+                      } else if (item.path === '/purchase-orders') {
+                        openNewPurchaseOrderModal();
                       } else {
                         navigate(`${item.path}/new`);
                       }

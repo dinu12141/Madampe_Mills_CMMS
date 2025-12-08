@@ -15,6 +15,8 @@ import Vendors from "./pages/Vendors";
 import PurchaseOrders from "./pages/PurchaseOrders";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Inspections from "./pages/Inspections";
+import Calendars from "./pages/Calendars";
 
 const ProtectedRoute = ({ children }) => {
   const { currentUser, loading } = useAuth();
@@ -118,6 +120,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inspections"
+              element={
+                <ProtectedRoute>
+                  <Inspections />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendars"
+              element={
+                <ProtectedRoute>
+                  <Calendars />
                 </ProtectedRoute>
               }
             />

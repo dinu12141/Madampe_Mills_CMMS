@@ -45,6 +45,7 @@ code {
         --chart-5: 27 87% 67%;
         --radius: 0.5rem;
     }
+
     .dark {
         --background: 0 0% 3.9%;
         --foreground: 0 0% 98%;
@@ -77,6 +78,7 @@ code {
     * {
         @apply border-border;
     }
+
     body {
         @apply bg-background text-foreground;
     }
@@ -87,7 +89,7 @@ code {
         display: contents !important;
     }
 
-    [data-debug-wrapper="true"] > * {
+    [data-debug-wrapper="true"]>* {
         margin-left: inherit;
         margin-right: inherit;
         margin-top: inherit;
@@ -112,4 +114,120 @@ code {
         border-top-color: inherit;
         border-bottom-color: inherit;
     }
+}
+
+/* Print Styles for Equipment Page */
+@media print {
+
+    /* Hide everything by default */
+    body>*:not(#print-container) {
+        display: none !important;
+    }
+
+    /* Show only print area */
+    #print-container,
+    .print-area {
+        display: block !important;
+        visibility: visible !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        padding: 30px !important;
+        background: white !important;
+        z-index: 99999 !important;
+    }
+
+    .print-area * {
+        visibility: visible !important;
+    }
+
+    /* Print header styles */
+    .print-header {
+        margin-bottom: 20px;
+    }
+
+    .print-header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+
+    /* Print table styles */
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+
+    .print-table th {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 2px solid #999;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .print-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: top;
+    }
+
+    .print-table tr:nth-child(even) {
+        background-color: #f5f5f5 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Print footer styles */
+    .print-footer {
+        position: fixed;
+        bottom: 20px;
+        left: 30px;
+        right: 30px;
+        font-size: 10px;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px solid #ddd;
+        padding-top: 10px;
+    }
+
+    /* Text color styles */
+    .equipment-id {
+        color: #0066cc !important;
+        font-weight: 500;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .equipment-model {
+        color: #666;
+        font-size: 11px;
+    }
+
+    .task-due {
+        color: #cc6600 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .task-due-soon {
+        color: #cc9900 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .inspection-ok {
+        color: #009900 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Hide print container when not printing */
+#print-container {
+    display: none;
 }
