@@ -17,6 +17,7 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Inspections from "./pages/Inspections";
 import Calendars from "./pages/Calendars";
+import Employees from "./pages/Employees";
 
 const ProtectedRoute = ({ children }) => {
   const { currentUser, loading } = useAuth();
@@ -136,6 +137,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Calendars />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employees"
+              element={
+                <ProtectedRoute>
+                  <Employees />
                 </ProtectedRoute>
               }
             />
